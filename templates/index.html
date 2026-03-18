@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo List</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        .user-info { background: #e8f5e8; padding: 10px; border-radius: 5px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; border-bottom: 1px solid #ddd; display: flex; align-items: center; }
+        .todo-number { font-weight: bold; margin-right: 15px; color: #4285f4; }
+        .todo-title { flex: 1; }
+        button { margin-left: 5px; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .edit-btn { background-color: #ffc107; color: black; }
+        .add-form { margin-top: 20px; display: flex; }
+        .add-input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px 0 0 5px; }
+        .add-btn { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 0 5px 5px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Todo List</h1>
+        <div class="user-info">
+            <span>Welcome, {{ user.email }}!</span>
+            <button id="sign-out">Sign Out</button>
+        </div>
+
+        <form action="{{ url_for('add') }}" method="POST" class="add-form">
+            <input type="text" name="title" class="add-input" placeholder="Enter a new task..." required>
+            <button type="submit" class="add-btn">Add</button>
+        </form>
+
+        <ul>
+            {% for todo in todos %}
+            <li>
+                <span class="todo-number">{{ loop.index }}.</span>
+                <span class="todo-title">{{ todo.title }}</span>
+                <form action="{{ url_for('edit', id=todo.id) }}" method="GET" style="display: inline;">
+                    <button type="submit" class="edit-btn">Edit</button>
+                </form>
+                <form action="{{ url_for('delete', id=todo.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="delete-btn" onclick="return confirm('Delete this todo?')">Delete</button>
+                </form>
+            </li>
+            {% else %}
+            <li style="justify-content: center; color: #999;">No todos yet. Add one above!</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('sign-out').addEventListener('click', () => {
+            // Clear token cookie and redirect to login
+            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+            window.location.href = "{{ url_for('login') }}";
+        });
+    </script>
+</body>
+</html>
