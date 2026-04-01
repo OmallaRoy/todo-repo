@@ -1,9 +1,19 @@
 import os
+import tempfile
 from flask import Flask, render_template, request, redirect, url_for
 from google.cloud import datastore
 import datetime
 import google.oauth2.id_token
 from google.auth.transport import requests as google_requests
+
+# --- Handle Railway credentials from environment variable ---
+if 'GOOGLE_CREDENTIALS' in os.environ:
+    # Write the JSON to a temporary file
+    temp_cred_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+    temp_cred_file.write(os.environ['GOOGLE_CREDENTIALS'])
+    temp_cred_file.close()
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_cred_file.name
+# -----------------------------------------------------------
 
 app = Flask(__name__)
 
