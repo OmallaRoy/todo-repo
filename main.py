@@ -1,24 +1,37 @@
 import os
+import json
 import tempfile
+import datetime
+
 from flask import Flask, render_template, request, redirect, url_for
 from google.cloud import datastore
-import datetime
 import google.oauth2.id_token
 from google.auth.transport import requests as google_requests
+from google.oauth2 import service_account
 
 # --- Handle Railway credentials from environment variable ---
-if 'GOOGLE_CREDENTIALS' in os.environ:
-    # Write the JSON to a temporary file
-    temp_cred_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-    temp_cred_file.write(os.environ['GOOGLE_CREDENTIALS'])
-    temp_cred_file.close()
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_cred_file.name
+creds = None
+
+if 'GOOGLE_APPLICATION_CREDENTIALS_JSON' in os.environ:
+    credentials_info = json.loads(os.environ['GOOGLE_APPLICATION_CREDENTIALS_JSON'])
+    creds = service_account.Credentials.from_service_account_info(credentials_info)
+elif 'GOOGLE_CREDENTIALS' in os.environ:
+    credentials_info = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+    creds = service_account.Credentials.from_service_account_info(credentials_info)
+elif 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+    # Local dev: path to credentials.json file
+    pass  # google libraries pick this up automatically
 # -----------------------------------------------------------
 
 app = Flask(__name__)
 
 firebase_request_adapter = google_requests.Request()
-datastore_client = datastore.Client()
+
+if creds:
+    datastore_client = datastore.Client(credentials=creds)
+else:
+    datastore_client = datastore.Client()
+
 
 def verify_token(id_token):
     """Verify Firebase token and return user claims."""
@@ -32,6 +45,7 @@ def verify_token(id_token):
     except ValueError as e:
         print(f"Token verification failed: {e}")
         return None
+
 
 @app.route('/')
 def index():
@@ -48,6 +62,7 @@ def index():
     else:
         return redirect(url_for('login'))
 
+
 @app.route('/login')
 def login():
     """Login page – redirects to index if already logged in."""
@@ -56,6 +71,7 @@ def login():
     if user_claims:
         return redirect(url_for('index'))
     return render_template('login.html')
+
 
 @app.route('/add', methods=['POST'])
 def add():
@@ -77,6 +93,7 @@ def add():
         datastore_client.put(todo)
     return redirect(url_for('index'))
 
+
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete(id):
     """Delete a todo."""
@@ -90,6 +107,7 @@ def delete(id):
     if todo and todo.get('user_id') == user_claims['user_id']:
         datastore_client.delete(key)
     return redirect(url_for('index'))
+
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
@@ -112,6 +130,7 @@ def edit(id):
             return redirect(url_for('index'))
 
     return render_template('edit.html', todo=todo)
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
