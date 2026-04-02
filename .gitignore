@@ -1,4 +1,4 @@
-﻿# Environment and secrets
+# Environment and secrets
 .env
 credentials.json
 *.pem
@@ -26,3 +26,6 @@ Thumbs.db
 # Logs
 *.log
 instance/
+
+app.yaml
+index.yaml
