@@ -1,7 +1,0 @@
-indexes:
-- kind: Todo
-  properties:
-  - name: user_id
-    direction: asc
-  - name: created
-    direction: asc
